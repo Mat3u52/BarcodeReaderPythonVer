@@ -12,4 +12,4 @@ Flow of the process:
 ![Screenshot of UX template.](https://github.com/Mat3u52/BarcodeReaderPythonVer/blob/main/drawing/Drawing.png)
 
 The app has been validated:
-- [X] Windows 10 ver. 22H2
+- [X] Microsoft Windows 10 Pro; version: 22H2
