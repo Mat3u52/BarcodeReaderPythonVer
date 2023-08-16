@@ -10,3 +10,6 @@ Appearance of application:
 Flow of the process:
 
 ![Screenshot of UX template.](https://github.com/Mat3u52/BarcodeReaderPythonVer/blob/main/drawing/Drawing.png)
+
+The app has been validated:
+- [X] Windows 10 ver. 22H2
