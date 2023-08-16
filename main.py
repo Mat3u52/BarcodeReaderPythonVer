@@ -26,7 +26,13 @@ try:
         barcode_init.close()
         if os.path.exists('C:\\Defects\\BuyOffControl.exe'):
             os.rename('C:\\Defects\\BuyOffControl.exe', 'C:\\Defects\\BuyOffControl0.exe')
-        amount_of_file_vvts = os.listdir('C:\\Defects\\ComportSignal')  # TODO if not exist create
+
+        if os.path.exists('C:\\Defects\\ComportSignal'):  # TODO if not exist create to verification
+            amount_of_file_vvts = os.listdir('C:\\Defects\\ComportSignal')  # TODO if not exist create to verification
+        else:
+            os.mkdir('C:\\Defects\\ComportSignal')
+            amount_of_file_vvts = os.listdir('C:\\Defects\\ComportSignal')
+
         for file_vvts in amount_of_file_vvts:
             os.remove(f"C:\\Defects\\ComportSignal\\{file_vvts}")
         amount_of_file_index = os.listdir('C:\\Defects\\index')
