@@ -1,6 +1,7 @@
 import serial
 import os
 import time
+import json
 import tkinter.messagebox
 from datetime import datetime
 from ProgramName import ProgramName
@@ -27,8 +28,8 @@ try:
         if os.path.exists('C:\\Defects\\BuyOffControl.exe'):
             os.rename('C:\\Defects\\BuyOffControl.exe', 'C:\\Defects\\BuyOffControl0.exe')
 
-        if os.path.exists('C:\\Defects\\ComportSignal'):  # TODO if not exist create to verification
-            amount_of_file_vvts = os.listdir('C:\\Defects\\ComportSignal')  # TODO if not exist create to verification
+        if os.path.exists('C:\\Defects\\ComportSignal'):
+            amount_of_file_vvts = os.listdir('C:\\Defects\\ComportSignal')
         else:
             os.mkdir('C:\\Defects\\ComportSignal')
             amount_of_file_vvts = os.listdir('C:\\Defects\\ComportSignal')
@@ -104,7 +105,7 @@ if __name__ == "__main__":
             file_to_read.close()
             print(f"Contents of barcode02 file: {content}")
 
-            flag_ready_to_send = False
+            # flag_ready_to_send = False # !!! - Latest modification for epsilon and gamma line.
 
             barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar')
             barcode_list_get = barcode_list.read()
@@ -143,7 +144,7 @@ if __name__ == "__main__":
                     modified_date = datetime.fromtimestamp(status_info.st_mtime)
                     modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
 
-                    time.sleep(1)
+                    # time.sleep(1)
                     while True:
                         print(f"\nI am waiting for switch to another recipe...\n")
                         status_info1 = os.stat("C:\\cpi\\data\\names.txt")
@@ -155,7 +156,7 @@ if __name__ == "__main__":
                         barcode_list.close()
 
                         if (int(modified_date_l1) < int(modified_date_l2)) and barcode_list_get == 'Barcode0':
-                            time.sleep(1)
+                            # time.sleep(1)
                             print("The recipe is not able to read barcode.")
                             barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
                             barcode_list.write(
@@ -166,10 +167,12 @@ if __name__ == "__main__":
                             print("\n--------------------------------------\n")
                             print(f"ProgramName from L2 suffix: {obj_prog_name.read_program_name_many()}")
                             print("\n--------------------------------------\n")
+                            # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
                             break
 
                 else:
                     # Save for usual recipe
+
                     if obj_trigger.turn_on_off() is not True:  # Check the .plx file
                         print("The recipe is not able to read barcode.")
                         # if content is barcode0 than save only barcode0 to barcodelist.bar, but I am not sure(??)
@@ -188,12 +191,18 @@ if __name__ == "__main__":
                         print("\n--------------------------------------\n")
 
                         print(f"C:\\cpi\\cad\\{obj_prog_name.read_program_name_one()}.plx")
+                        # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
                     else:
                         print("Single Recipe - The recipe is able to read barcode.")
+                        # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
 
+                flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
                 #  turn on BuyOffControl - Start
                 if os.path.exists('C:\\Defects\\BuyOffControl0.exe'):
                     os.rename('C:\\Defects\\BuyOffControl0.exe', 'C:\\Defects\\BuyOffControl.exe')
                 #  turn on BuyOffControl - The End
-
-    ser.close()  # for the moment it is out of reach
+            else:
+                pass
+            # TODO verification the AOI is running. Wait ~10 s. if AOI is not running by 10 s
+            #  than adjust the barcodelist file to Barcode0
+    # ser.close()  # for the moment it is out of reach
