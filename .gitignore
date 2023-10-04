@@ -3,7 +3,6 @@ addendum/
 __pycache__/
 *.pyc
 *~
-/static
 .DS_Store
 .idea
 Config.json
