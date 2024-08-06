@@ -7,6 +7,7 @@ from datetime import datetime
 from ProgramName import ProgramName
 from Trigger import Trigger
 from BarcodeNotification import BarcodeNotification
+from StartAOIValidator import StartAOIValidator
 
 # pyinstaller -F --paths=C:\BarcodeReaderPythonVer\venv\Lib\site-packages C:\BarcodeReaderPythonVer\main.py
 # pyinstaller -F --paths=C:\BarcodeReaderPythonVer\venv\Lib\site-packages C:\BarcodeReaderPythonVer\main.py --noconsole
@@ -50,6 +51,7 @@ except serial.SerialException:
 convert_barcode: str = ""
 captured_barcode_str: list = []
 flag_ready_to_send: bool = False
+flag_pass: bool = True
 ASCII_SELECTED: tuple = (48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
 
                          65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
@@ -77,7 +79,8 @@ if __name__ == "__main__":
                     process_name = "BuyOffControl"
                     try:
                         killed = os.system('tskill ' + process_name)
-                    except Exception:
+                    except Exception as e:
+                        print(f"[Process BuyOffControl] An error occurred: {e}")
                         pass
         #  turn on BuyOffControl - The End
 
@@ -119,7 +122,10 @@ if __name__ == "__main__":
                 print(f"C:\\cpi\\cad\\{obj_prog_name.read_program_name_one()}.plx")
 
                 # Save for multiple recipe ERBHROA1287281_11R1B-BOTL1 / ERBHROA1287281_11R1B-BOTL2
-                if str(obj_prog_name.read_program_name_one()[-2:]) == "L1" and obj_trigger.turn_on_off() is not True:
+                if (
+                        (str(obj_prog_name.read_program_name_one()[-3:]) == "TL1" or str(obj_prog_name.read_program_name_one()[-3:]) == "PL1") and
+                        obj_trigger.turn_on_off() is not True
+                ):  # origin line 05-08-2024
                     print(f"\n{obj_prog_name.read_program_name_one()[-2:]}\n")
 
                     # if obj_trigger.turn_on_off() is True:  # Check the .plx file
@@ -140,41 +146,163 @@ if __name__ == "__main__":
                     # else:
                     print("The recipe is able to read barcode.")
 
+                    print("I am waiting...")
+                    time.sleep(10)
+                    obj_StartAOIValidator = StartAOIValidator(
+                        path_to_txt="C:\\cpi\\data\\currentBoardMode.txt",
+                        path_to_barcode_txt="C:\\cpi\\barcode\\barcode02.txt"
+                    )
+                    if obj_StartAOIValidator.start_on_off():
+                        print('File exists and is recently modified - [Status validation][OK]')
+                        flag_pass = True
+                    else:
+                        print('File does not exist or is not recently modified - [Status validation][NOK]')
+                        barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
+                        barcode_list.write("Barcode0")
+                        barcode_list.close()
+                        flag_pass = False
+
                     status_info = os.stat("C:\\cpi\\data\\names.txt")
                     modified_date = datetime.fromtimestamp(status_info.st_mtime)
                     modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
 
-                    # time.sleep(1)
-                    while True:
-                        print(f"\nI am waiting for switch to another recipe...\n")
-                        status_info1 = os.stat("C:\\cpi\\data\\names.txt")
-                        modified_date1 = datetime.fromtimestamp(status_info1.st_mtime)
-                        modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M")
+                    if flag_pass:
+                        # time.sleep(1)
+                        while True:
+                            print(f"\nI am waiting for switch to another recipe...\n")
+                            status_info1 = os.stat("C:\\cpi\\data\\names.txt")
+                            modified_date1 = datetime.fromtimestamp(status_info1.st_mtime)
+                            modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M")
 
-                        barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar')
-                        barcode_list_get = barcode_list.read()
+                            barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar')
+                            barcode_list_get = barcode_list.read()
+                            barcode_list.close()
+
+                            if (int(modified_date_l1) < int(modified_date_l2)) and barcode_list_get == 'Barcode0':
+                                # time.sleep(1)
+                                print("The recipe is not able to read barcode.")
+                                barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
+                                barcode_list.write(
+                                    f"#Board: {obj_prog_name.read_program_name_one()}, {datestamp}\n\n#Number Of Panel	Barcode\nBarcode#1	*{content}\n#End")
+                                barcode_list.close()
+                                print("Ready!")
+
+                                print("\n--------------------------------------\n")
+                                print(f"ProgramName from L2 suffix: {obj_prog_name.read_program_name_many()}")
+                                print("\n--------------------------------------\n")
+                                # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
+                                break
+
+
+
+
+                elif (
+                        (
+                                str(obj_prog_name.read_program_name_one()[-9:]) == "L1_preAOI" or
+                                str(obj_prog_name.read_program_name_one()[-9:]) == "_preAOIL1"
+                        ) and
+                        obj_trigger.turn_on_off() is not True
+                ):
+                    print(f"\n{obj_prog_name.read_program_name_one()[-2:]}\n")
+
+                    # if obj_trigger.turn_on_off() is True:  # Check the .plx file
+                    print("The recipe is not able to read barcode.")
+                    barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
+                    barcode_list.write(
+                        f"#Board: {obj_prog_name.read_program_name_one()}, {datestamp}\n\n#Number Of Panel	Barcode\nBarcode#1	*{content}\n#End")
+                    barcode_list.close()
+                    print("Ready!")
+                    obj_notification = BarcodeNotification(str(obj_prog_name.read_program_name_one()), str(content))
+                    obj_notification.show_notification(str(datestamp))
+
+                    print("\n--------------------------------------\n")
+                    print(f"ProgramName: {obj_prog_name.read_program_name_many()}")
+                    print("\n--------------------------------------\n")
+
+                    print(f"C:\\cpi\\cad\\{obj_prog_name.read_program_name_one()}.plx")
+                    # else:
+                    print("The recipe is able to read barcode.")
+
+                    print("I am waiting...")
+                    time.sleep(10)
+                    obj_StartAOIValidator = StartAOIValidator(
+                        path_to_txt="C:\\cpi\\data\\currentBoardMode.txt",
+                        path_to_barcode_txt="C:\\cpi\\barcode\\barcode02.txt"
+                    )
+                    if obj_StartAOIValidator.start_on_off():
+                        print('File exists and is recently modified - [Status validation][OK]')
+                        flag_pass = True
+                    else:
+                        print('File does not exist or is not recently modified - [Status validation][NOK]')
+                        barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
+                        barcode_list.write("Barcode0")
+                        barcode_list.close()
+                        flag_pass = False
+
+                    status_info = os.stat("C:\\cpi\\data\\names.txt")
+                    modified_date = datetime.fromtimestamp(status_info.st_mtime)
+                    modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
+
+                    if flag_pass:
+                        # status_info = os.stat("C:\\cpi\\data\\names.txt")
+                        # modified_date = datetime.fromtimestamp(status_info.st_mtime)
+                        # modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
+
+                        # time.sleep(1)
+                        while True:
+                            print(f"\nI am waiting for switch to another recipe...\n")
+                            status_info1 = os.stat("C:\\cpi\\data\\names.txt")
+                            modified_date1 = datetime.fromtimestamp(status_info1.st_mtime)
+                            modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M")
+
+                            barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar')
+                            barcode_list_get = barcode_list.read()
+                            barcode_list.close()
+
+                            if (int(modified_date_l1) < int(modified_date_l2)) and barcode_list_get == 'Barcode0':
+                                # time.sleep(1)
+                                print("The recipe is not able to read barcode.")
+                                barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
+                                barcode_list.write(
+                                    f"#Board: {obj_prog_name.read_program_name_one()}, {datestamp}\n\n#Number Of Panel	Barcode\nBarcode#1	*{content}\n#End")
+                                barcode_list.close()
+                                print("Ready!")
+
+                                print("\n--------------------------------------\n")
+                                print(f"ProgramName from L2 suffix: {obj_prog_name.read_program_name_many()}")
+                                print("\n--------------------------------------\n")
+                                # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
+                                break
+
+
+                elif str(obj_prog_name.read_program_name_one()[-4:]) == "PASS" and obj_trigger.turn_on_off() is not True:
+
+                    if obj_trigger.turn_on_off() is not True:  # Check the .plx file
+                        print("The AOI recipe is not able to read barcode")
+                        # if content is barcode0 than save only barcode0 to barcodelist.bar, but I am not sure(??)
+                        barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
+                        barcode_list.write("Barcode0")
                         barcode_list.close()
 
-                        if (int(modified_date_l1) < int(modified_date_l2)) and barcode_list_get == 'Barcode0':
-                            # time.sleep(1)
-                            print("The recipe is not able to read barcode.")
-                            barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
-                            barcode_list.write(
-                                f"#Board: {obj_prog_name.read_program_name_one()}, {datestamp}\n\n#Number Of Panel	Barcode\nBarcode#1	*{content}\n#End")
-                            barcode_list.close()
-                            print("Ready!")
+                        obj_notification = BarcodeNotification(str(obj_prog_name.read_program_name_one()), str(content))
+                        obj_notification.show_notification(str(datestamp))
 
-                            print("\n--------------------------------------\n")
-                            print(f"ProgramName from L2 suffix: {obj_prog_name.read_program_name_many()}")
-                            print("\n--------------------------------------\n")
-                            # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
-                            break
+                        print("Ready!")
+
+                        # test of multiple recipes
+                        print("\n--------------------------------------\n")
+                        print(f"ProgramName: {obj_prog_name.read_program_name_many()}")
+                        print("\n--------------------------------------\n")
+
+                        print(f"C:\\cpi\\cad\\{obj_prog_name.read_program_name_one()}.plx")
+                        # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
+
 
                 else:
                     # Save for usual recipe
 
                     if obj_trigger.turn_on_off() is not True:  # Check the .plx file
-                        print("The recipe is not able to read barcode.")
+                        print("The AOI recipe is not able to read barcode")
                         # if content is barcode0 than save only barcode0 to barcodelist.bar, but I am not sure(??)
                         barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
                         barcode_list.write(f"#Board: {obj_prog_name.read_program_name_one()}, {datestamp}\n\n#Number Of Panel	Barcode\nBarcode#1	*{content}\n#End")
@@ -192,8 +320,26 @@ if __name__ == "__main__":
 
                         print(f"C:\\cpi\\cad\\{obj_prog_name.read_program_name_one()}.plx")
                         # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
+                        print("I am waiting...")
+                        time.sleep(10)
+                        obj_StartAOIValidator = StartAOIValidator(
+                            path_to_txt="C:\\cpi\\data\\currentBoardMode.txt",
+                            path_to_barcode_txt="C:\\cpi\\barcode\\barcode02.txt"
+                        )
+                        if obj_StartAOIValidator.start_on_off():
+                            print('File exists and is recently modified - [Status validation][OK]')
+                        else:
+                            print('File does not exist or is not recently modified - [Status validation][NOK]')
+                            barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
+                            barcode_list.write("Barcode0")
+                            barcode_list.close()
+
+
+
+
                     else:
-                        print("Single Recipe - The recipe is able to read barcode.")
+                        print("Single Recipe - The AOI recipe is able to read barcode.")
+
                         # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
 
                 flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
@@ -203,6 +349,5 @@ if __name__ == "__main__":
                 #  turn on BuyOffControl - The End
             else:
                 pass
-            # TODO verification the AOI is running. Wait ~10 s. if AOI is not running by 10 s
-            #  than adjust the barcodelist file to Barcode0
+
     # ser.close()  # for the moment it is out of reach
