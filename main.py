@@ -13,6 +13,8 @@ from BarcodeReaderLog import BarcodeReaderLog
 
 # pyinstaller -F --paths=C:\BarcodeReaderPythonVer\venv\Lib\site-packages C:\BarcodeReaderPythonVer\main.py
 # pyinstaller -F --paths=C:\BarcodeReaderPythonVer\venv\Lib\site-packages C:\BarcodeReaderPythonVer\main.py --noconsole
+# pyinstaller -F --paths=C:\Projects\BarcodeReader\BarcodeReaderPythonVer\venv\Lib\site-packages C:\Projects\BarcodeReader\BarcodeReaderPythonVer\main.py --onefile --noconsole -i icon/images.ico
+# pyinstaller -F --paths=C:\Projects\BarcodeReader\BarcodeReaderPythonVer\venv\Lib\site-packages C:\Projects\BarcodeReader\BarcodeReaderPythonVer\main.py --onefile --noconsole -i "C:\Projects\BarcodeReader\BarcodeReaderPythonVer\icon\logo.ico"
 # C:\Users\tczmkolo\dist
 
 try:
@@ -105,7 +107,10 @@ if __name__ == "__main__":
                     except Exception as e:
                         print(f"[Process BuyOffControl] An error occurred: {e}")
                         pass
-            elif str(obj_prog_name.read_program_name_one()) in str(file_index):
+            # elif str(obj_prog_name.read_program_name_one()) in str(file_index):
+            #     obj_barcode_vvts_flag = True
+
+            elif str(obj_prog_name.read_program_name_one()[0:14]) in str(file_index):
                 obj_barcode_vvts_flag = True
 
         #  turn on BuyOffControl - The End
@@ -113,22 +118,36 @@ if __name__ == "__main__":
         if obj_barcode_vvts_flag:
             obj_barcode_vvts_flag = False
             index = str(file_index)
-            if str(index) not in str(index_temp):
+            if (str(index) not in str(index_temp)) and (str(index) != 'testPermission.txt'):
                 part = index.split("[@$@]")
-                obj_barcode_vvts_log.write_log(f"{part[0]}", f"{part[1]}")
+                print(part)
+                if len(part) >= 2:
+                    obj_barcode_vvts_log.write_log(f"{part[0]}", f"{part[1]}")
                 index_temp = index
 
         if obj_prog_name.read_program_name_one() not in prog_temp:
             obj_barcode_prog_log.write_log(f"{obj_prog_name.read_program_name_one()}",
                                            f"Program status")
             prog_temp = obj_prog_name.read_program_name_one()
-            #  If recipe is change clean up the logs
-            if os.path.exists('C:\\cpi\\barcode\\log\\readerLog.txt'):
-                os.remove(f"C:\\cpi\\barcode\\log\\readerLog.txt")
-            if os.path.exists('C:\\cpi\\barcode\\log\\AOILog.txt'):
-                os.remove(f"C:\\cpi\\barcode\\log\\AOILog.txt")
-            if os.path.exists('C:\\cpi\\barcode\\log\\VVTSLog.txt'):
-                os.remove(f"C:\\cpi\\barcode\\log\\VVTSLog.txt")
+            #  If recipe is changed clean up the logs
+            if (
+                    str(obj_prog_name.read_program_name_one()[-3:]) == "TL1" or
+                    str(obj_prog_name.read_program_name_one()[-3:]) == "PL1" or
+                    str(obj_prog_name.read_program_name_one()[-3:]) == "TL2" or
+                    str(obj_prog_name.read_program_name_one()[-3:]) == "PL2" or
+                    str(obj_prog_name.read_program_name_one()[-9:]) == "L1_preAOI" or
+                    str(obj_prog_name.read_program_name_one()[-9:]) == "_preAOIL1" or
+                    str(obj_prog_name.read_program_name_one()[-9:]) == "L2_preAOI" or
+                    str(obj_prog_name.read_program_name_one()[-9:]) == "_preAOIL2"
+            ):
+                pass
+            else:
+                if os.path.exists('C:\\cpi\\barcode\\log\\readerLog.txt'):
+                    os.remove(f"C:\\cpi\\barcode\\log\\readerLog.txt")
+                if os.path.exists('C:\\cpi\\barcode\\log\\AOILog.txt'):
+                    os.remove(f"C:\\cpi\\barcode\\log\\AOILog.txt")
+                if os.path.exists('C:\\cpi\\barcode\\log\\VVTSLog.txt'):
+                    os.remove(f"C:\\cpi\\barcode\\log\\VVTSLog.txt")
 
         for line in ser.read():
             if line in ASCII_SELECTED:
@@ -139,7 +158,6 @@ if __name__ == "__main__":
                 print(f"join: {convert_barcode}")
 
                 obj_barcode_reader_log.write_log(f"{obj_prog_name.read_program_name_one()}", f"{convert_barcode}")
-                # obj_barcode_aoi_log.write_log(f"{obj_prog_name.read_program_name_one()}", f".........")
 
                 if (convert_barcode in INVALID_BARCODE) or (len(convert_barcode) > 14) or (len(convert_barcode) < 8):
                     convert_barcode = 'Barcode0'
@@ -233,7 +251,6 @@ if __name__ == "__main__":
                     modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
 
                     if flag_pass:
-                        # time.sleep(1)
                         while True:
                             print(f"\nI am waiting for switch to another recipe...\n")
                             status_info1 = os.stat("C:\\cpi\\data\\names.txt")
@@ -256,12 +273,7 @@ if __name__ == "__main__":
                                 print("\n--------------------------------------\n")
                                 print(f"ProgramName from L2 suffix: {obj_prog_name.read_program_name_many()}")
                                 print("\n--------------------------------------\n")
-                                # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
                                 break
-
-
-
-
                 elif (
                         (
                                 str(obj_prog_name.read_program_name_one()[-9:]) == "L1_preAOI" or
@@ -271,7 +283,6 @@ if __name__ == "__main__":
                 ):
                     print(f"\n{obj_prog_name.read_program_name_one()[-2:]}\n")
 
-                    # if obj_trigger.turn_on_off() is True:  # Check the .plx file
                     print("The recipe is not able to read barcode.")
 
                     barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
@@ -287,8 +298,6 @@ if __name__ == "__main__":
                     print("\n--------------------------------------\n")
 
                     print(f"C:\\cpi\\cad\\{obj_prog_name.read_program_name_one()}.plx")
-                    # else:
-                    # print("The recipe is able to read barcode.")
 
                     countdown = 0
                     flag_board_inside = False
@@ -324,11 +333,6 @@ if __name__ == "__main__":
                     modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
 
                     if flag_pass:
-                        # status_info = os.stat("C:\\cpi\\data\\names.txt")
-                        # modified_date = datetime.fromtimestamp(status_info.st_mtime)
-                        # modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
-
-                        # time.sleep(1)
                         while True:
                             print(f"\nI am waiting for switch to another recipe...\n")
                             status_info1 = os.stat("C:\\cpi\\data\\names.txt")
@@ -351,7 +355,6 @@ if __name__ == "__main__":
                                 print("\n--------------------------------------\n")
                                 print(f"ProgramName from L2 suffix: {obj_prog_name.read_program_name_many()}")
                                 print("\n--------------------------------------\n")
-                                # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
                                 break
 
 
@@ -374,7 +377,6 @@ if __name__ == "__main__":
                     print("\n--------------------------------------\n")
 
                     print(f"C:\\cpi\\cad\\{obj_prog_name.read_program_name_one()}.plx")
-                    # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
 
 
                 else:
@@ -398,8 +400,6 @@ if __name__ == "__main__":
                         print("\n--------------------------------------\n")
 
                         print(f"C:\\cpi\\cad\\{obj_prog_name.read_program_name_one()}.plx")
-                        # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
-                        # this section is for remove the barcode from AOI if PCB is not go inside
 
                         countdown = 0
                         flag_board_inside = False
@@ -417,7 +417,7 @@ if __name__ == "__main__":
                                 break
 
                             time.sleep(1)
-                            countdown += 1  # Increment the countdown
+                            countdown += 1
 
                         if flag_board_inside:
                             print('File exists and is recently modified - [Status validation][OK]')
@@ -430,9 +430,7 @@ if __name__ == "__main__":
                     else:
                         print("Single Recipe - The AOI recipe is able to read barcode.")
 
-                        # flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
-
-                flag_ready_to_send = False  # !!! - Latest modification for epsilon and gamma line. To ver on alpha.
+                flag_ready_to_send = False
                 #  turn on BuyOffControl - Start
                 if os.path.exists('C:\\Defects\\BuyOffControl0.exe'):
                     os.rename('C:\\Defects\\BuyOffControl0.exe', 'C:\\Defects\\BuyOffControl.exe')

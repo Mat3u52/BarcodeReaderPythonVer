@@ -1,5 +1,6 @@
 venv/
 addendum/
+icon/
 __pycache__/
 *.pyc
 *~
