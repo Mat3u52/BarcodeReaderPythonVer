@@ -122,7 +122,12 @@ if __name__ == "__main__":
                 part = index.split("[@$@]")
                 print(part)
                 if len(part) >= 2:
-                    obj_barcode_vvts_log.write_log(f"{part[0]}", f"{part[1]}")
+                    # original part of code
+                    # obj_barcode_vvts_log.write_log(f"{part[0]}", f"{part[1]}")
+                    #  todo: verify this lines of code
+                    if part[3] == '1':
+                        obj_barcode_vvts_log.write_log(f"{part[0]}", f"{part[1]}")
+                    # the end
                 index_temp = index
 
         if obj_prog_name.read_program_name_one() not in prog_temp:
@@ -225,8 +230,8 @@ if __name__ == "__main__":
                     )
 
                     # Run the loop while countdown is less than 8
-                    while countdown < 8:
-                        print(f"I am waiting... {8 - countdown}")
+                    while countdown < 9:
+                        print(f"I am waiting... {9 - countdown}")
 
                         if obj_StartAOIValidator.start_on_off():
                             flag_board_inside = True
@@ -307,8 +312,8 @@ if __name__ == "__main__":
                     )
 
                     # Run the loop while countdown is less than 8
-                    while countdown < 8:
-                        print(f"I am waiting... {8 - countdown}")
+                    while countdown < 9:
+                        print(f"I am waiting... {9 - countdown}")
 
                         if obj_StartAOIValidator.start_on_off():
                             flag_board_inside = True
