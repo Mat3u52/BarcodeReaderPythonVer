@@ -11,7 +11,7 @@ from StartAOIValidator import StartAOIValidator
 from BarcodeReaderLog import BarcodeReaderLog
 # import logging
 
-# pyinstaller -F --paths=C:\BarcodeReaderPythonVer\venv\Lib\site-packages C:\BarcodeReaderPythonVer\main.py
+# pyinstaller -F --paths=C:\Projects\BarcodeReader\BarcodeReaderPythonVer\venv\Lib\site-packages C:\Projects\BarcodeReader\BarcodeReaderPythonVer\main.py
 # pyinstaller -F --paths=C:\BarcodeReaderPythonVer\venv\Lib\site-packages C:\BarcodeReaderPythonVer\main.py --noconsole
 # pyinstaller -F --paths=C:\Projects\BarcodeReader\BarcodeReaderPythonVer\venv\Lib\site-packages C:\Projects\BarcodeReader\BarcodeReaderPythonVer\main.py --onefile --noconsole -i icon/images.ico
 # pyinstaller -F --paths=C:\Projects\BarcodeReader\BarcodeReaderPythonVer\venv\Lib\site-packages C:\Projects\BarcodeReader\BarcodeReaderPythonVer\main.py --onefile --noconsole -i "C:\Projects\BarcodeReader\BarcodeReaderPythonVer\icon\logo.ico"
@@ -127,6 +127,7 @@ if __name__ == "__main__":
                     #  todo: verify this lines of code
                     if part[3] == '1':
                         obj_barcode_vvts_log.write_log(f"{part[0]}", f"{part[1]}")
+
                     # the end
                 index_temp = index
 
@@ -201,16 +202,13 @@ if __name__ == "__main__":
                         obj_trigger.turn_on_off() is not True
                 ):
                     print(f"\n{obj_prog_name.read_program_name_one()[-3:]}\n")
-
-                    # if obj_trigger.turn_on_off() is True:  # Check the .plx file
                     print("The recipe is not able to read barcode.")
-
 
                     barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
                     barcode_list.write(
                         f"#Board: {obj_prog_name.read_program_name_one()}, {datestamp}\n\n#Number Of Panel	Barcode\nBarcode#1	*{content}\n#End")
                     barcode_list.close()
-                    print("Ready!")
+                    print("First part of board is ready now!")
                     obj_notification = BarcodeNotification(str(obj_prog_name.read_program_name_one()), str(content))
                     obj_notification.show_notification(str(datestamp))
 
@@ -220,7 +218,7 @@ if __name__ == "__main__":
 
                     print(f"C:\\cpi\\cad\\{obj_prog_name.read_program_name_one()}.plx")
                     # else:
-                    print("The recipe is able to read barcode.")
+                    # print("The recipe is able to read barcode.")
 
                     countdown = 0
                     flag_board_inside = False
@@ -253,31 +251,46 @@ if __name__ == "__main__":
 
                     status_info = os.stat("C:\\cpi\\data\\names.txt")
                     modified_date = datetime.fromtimestamp(status_info.st_mtime)
-                    modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
+                    # modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
+                    modified_date_l1 = modified_date.strftime("%Y%m%d%H%M%S")
 
                     if flag_pass:
                         while True:
-                            print(f"\nI am waiting for switch to another recipe...\n")
+                            # print(f"\nI am waiting for switch to another recipe...\n")
                             status_info1 = os.stat("C:\\cpi\\data\\names.txt")
                             modified_date1 = datetime.fromtimestamp(status_info1.st_mtime)
-                            modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M")
+                            # modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M")
+                            modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M%S")
 
                             barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar')
                             barcode_list_get = barcode_list.read()
                             barcode_list.close()
 
-                            if (int(modified_date_l1) < int(modified_date_l2)) and barcode_list_get == 'Barcode0':
-                                # time.sleep(1)
-                                print("The recipe is not able to read barcode.")
+                            # if (int(modified_date_l1) < int(modified_date_l2)) and barcode_list_get == 'Barcode0':
+                            if int(modified_date_l1) < int(modified_date_l2):
+                                # print("Second part of board is ready now!")
                                 barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
                                 barcode_list.write(
                                     f"#Board: {obj_prog_name.read_program_name_one()}, {datestamp}\n\n#Number Of Panel	Barcode\nBarcode#1	*{content}\n#End")
                                 barcode_list.close()
-                                print("Ready!")
+                                print("Second part of board is ready now!")
 
                                 print("\n--------------------------------------\n")
                                 print(f"ProgramName from L2 suffix: {obj_prog_name.read_program_name_many()}")
                                 print("\n--------------------------------------\n")
+
+                                while True:
+                                    status_info1 = os.stat("C:\\cpi\\data\\names.txt")
+                                    modified_date3 = datetime.fromtimestamp(status_info1.st_mtime)
+                                    # modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M")
+                                    modified_date_l3 = modified_date3.strftime("%Y%m%d%H%M%S")
+                                    if int(modified_date_l2) < int(modified_date_l3):
+                                        print("Adjusted Barcode0 into barcodelist.bar file.")
+                                        with open('C:\\cpi\\barcode\\barcodelist.bar', 'w') as barcode_list:
+                                            barcode_list.write("Barcode0")
+                                        obj_barcode_aoi_log.write_log(f"{obj_prog_name.read_program_name_one()}", f"Barcode0")
+                                        break
+
                                 break
                 elif (
                         (
@@ -312,7 +325,7 @@ if __name__ == "__main__":
                     )
 
                     # Run the loop while countdown is less than 8
-                    while countdown < 9:
+                    while countdown < 9:  # 9
                         print(f"I am waiting... {9 - countdown}")
 
                         if obj_StartAOIValidator.start_on_off():
@@ -335,21 +348,25 @@ if __name__ == "__main__":
 
                     status_info = os.stat("C:\\cpi\\data\\names.txt")
                     modified_date = datetime.fromtimestamp(status_info.st_mtime)
-                    modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
+                    # modified_date_l1 = modified_date.strftime("%Y%m%d%H%M")
+                    modified_date_l1 = modified_date.strftime("%Y%m%d%H%M%S")
 
                     if flag_pass:
                         while True:
                             print(f"\nI am waiting for switch to another recipe...\n")
                             status_info1 = os.stat("C:\\cpi\\data\\names.txt")
                             modified_date1 = datetime.fromtimestamp(status_info1.st_mtime)
-                            modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M")
+                            # modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M")
+                            modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M%S")
 
                             barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar')
                             barcode_list_get = barcode_list.read()
                             barcode_list.close()
 
-                            if (int(modified_date_l1) < int(modified_date_l2)) and barcode_list_get == 'Barcode0':
-                                # time.sleep(1)
+                            print(f"{modified_date_l1} < {modified_date_l2}")
+
+                            # if (int(modified_date_l1) < int(modified_date_l2)) and barcode_list_get == 'Barcode0':
+                            if int(modified_date_l1) < int(modified_date_l2):
                                 print("The recipe is not able to read barcode.")
                                 barcode_list = open('C:\\cpi\\barcode\\barcodelist.bar', 'w')
                                 barcode_list.write(
@@ -360,6 +377,19 @@ if __name__ == "__main__":
                                 print("\n--------------------------------------\n")
                                 print(f"ProgramName from L2 suffix: {obj_prog_name.read_program_name_many()}")
                                 print("\n--------------------------------------\n")
+
+                                while True:
+                                    status_info1 = os.stat("C:\\cpi\\data\\names.txt")
+                                    modified_date3 = datetime.fromtimestamp(status_info1.st_mtime)
+                                    # modified_date_l2 = modified_date1.strftime("%Y%m%d%H%M")
+                                    modified_date_l3 = modified_date3.strftime("%Y%m%d%H%M%S")
+                                    if int(modified_date_l2) < int(modified_date_l3):
+                                        print("Adjusted Barcode0 into barcodelist.bar file.")
+                                        with open('C:\\cpi\\barcode\\barcodelist.bar', 'w') as barcode_list:
+                                            barcode_list.write("Barcode0")
+                                        obj_barcode_aoi_log.write_log(f"{obj_prog_name.read_program_name_one()}", f"Barcode0")
+                                        break
+
                                 break
 
 
